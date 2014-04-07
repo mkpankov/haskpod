@@ -17,4 +17,8 @@ cabal-version:       >=1.8
 executable haskpod
   main-is:             Main.hs
   -- other-modules:       
-  build-depends:       base ==4.6.*
+  build-depends:       base == 4.6.*
+                     , time == 1.4.*
+                     , cmdlib == 0.3.*
+                     , datetime == 0.2.*
+                     , old-locale == 1.0.*

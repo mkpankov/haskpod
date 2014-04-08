@@ -35,7 +35,8 @@ instance Attributes Haskpod where
         ]
 
 instance RecordCommand Haskpod where
-    mode_summary _ = "Podcast management tool."
+  run' = undefined
+  mode_summary _ = "Podcast management tool."
 
 csv :: String -> [String]
 csv s = case dropWhile isComma s of

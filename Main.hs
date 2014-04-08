@@ -5,7 +5,11 @@ module Main where
 import Control.Monad
 import Data.Time
 import Data.DateTime
-import System.Console.CmdLib
+import Database.HDBC
+import Database.HDBC.Sqlite3
+import System.Console.CmdLib (Attributes(..), RecordCommand(..), Typeable, Data,
+                              Attribute(..), (%>), executeR, group, getArgs)
+import System.Directory
 import System.Locale
 
 data Podcast = Podcast { episodeNumber_ :: Int
@@ -47,4 +51,30 @@ main = getArgs >>= executeR Main {} >>= \opts -> do
       gs = csv $ guests opts
       ps = csv $ topics opts
       p  = Podcast (episodeNumber opts) gs ps t
+  d <- doesFileExist databaseFilePath
+  when (not d) initDatabase
+  savePodcast p
   print p
+
+savePodcast p = do
+  conn <- connectSqlite3 databaseFilePath
+  run conn "INSERT INTO podcasts VALUES (NULL, ?, ?, ?, ?)"
+    [toSql $ episodeNumber_ p, toSql $ unlines $ topics_ p,
+     toSql $ unlines $ guests_ p, toSql $ start_ p]
+  commit conn
+  disconnect conn
+  return ()
+
+initDatabase = do
+  conn <- connectSqlite3 databaseFilePath
+  run conn ("CREATE TABLE podcasts" ++
+               " ( id     INTEGER PRIMARY KEY ASC " ++
+               " , number INTEGER NOT NULL " ++
+               " , topics TEXT NOT NULL " ++
+               " , guests TEXT NOT NULL " ++
+               " , start_ INTEGER NOT NULL ) ") []
+  commit conn
+  disconnect conn
+  return ()
+
+databaseFilePath = "podcasts.db"

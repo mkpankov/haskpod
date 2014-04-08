@@ -22,3 +22,6 @@ executable haskpod
                      , cmdlib == 0.3.*
                      , datetime == 0.2.*
                      , old-locale == 1.0.*
+                     , directory == 1.2.*
+                     , HDBC-sqlite3 == 2.3.*
+                     , HDBC == 2.4.*

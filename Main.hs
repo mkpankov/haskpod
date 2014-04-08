@@ -19,14 +19,14 @@ data Podcast = Podcast { episodeNumber_ :: Int
                        }
                deriving (Show)
 
-data Main = Main { episodeNumber :: Int
+data Haskpod = Haskpod { episodeNumber :: Int
                  , guests :: String
                  , topics :: String
                  , start :: String }
     deriving (Typeable, Data, Eq, Show)
 
-instance Attributes Main where
-    attributes _ = group "Options" [
+instance Attributes Haskpod where
+    attributes _ = group "Adding a podcast" [
         episodeNumber %> [ Help "Episode number", Default (1 :: Integer) ],
         guests %> Help "Guests of the episode",
         topics %> Help "Topics of the episode",
@@ -34,8 +34,8 @@ instance Attributes Main where
                  , Default (Data.DateTime.fromGregorian 2014 1 1 0 0 0) ]
         ]
 
-instance RecordCommand Main where
-    mode_summary _ = "Hello world with argument parsing."
+instance RecordCommand Haskpod where
+    mode_summary _ = "Podcast management tool."
 
 csv :: String -> [String]
 csv s = case dropWhile isComma s of
@@ -45,7 +45,7 @@ csv s = case dropWhile isComma s of
             break isComma s'
   where isComma = (== ',')
 
-main = getArgs >>= executeR Main {} >>= \opts -> do
+main = getArgs >>= executeR Haskpod {} >>= \opts -> do
   let ts = start opts
       Just t = (parseTime defaultTimeLocale "%D %R" ts) :: Maybe UTCTime
       gs = csv $ guests opts

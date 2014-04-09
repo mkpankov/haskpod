@@ -31,7 +31,7 @@ instance Attributes Haskpod where
         guests %> Help "Guests of the episode",
         topics %> Help "Topics of the episode",
         start %> [ Help "Start date and time"
-                 , Default (Data.DateTime.fromGregorian 2014 1 1 0 0 0) ]
+                 , Default "01/01/14 00:00" ]
         ]
 
 instance RecordCommand Haskpod where

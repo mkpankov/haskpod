@@ -46,7 +46,7 @@ csv s = case dropWhile isComma s of
             break isComma s'
   where isComma = (== ',')
 
-main = getArgs >>= executeR Haskpod {} >>= \opts -> do
+main = getArgs >>= executeR (Haskpod 0 "" "" "") >>= \opts -> do
   let ts = start opts
       Just t = (parseTime defaultTimeLocale "%D %R" ts) :: Maybe UTCTime
       gs = csv $ guests opts

@@ -8,7 +8,8 @@ import Data.DateTime
 import Database.HDBC
 import Database.HDBC.Sqlite3
 import System.Console.CmdLib (Attributes(..), RecordCommand(..), Typeable, Data,
-                              Attribute(..), (%>), executeR, group, getArgs)
+                              Attribute(..), (%>), group, getArgs,
+                              dispatchR)
 import System.Directory
 import System.Locale
 
@@ -19,24 +20,25 @@ data Podcast = Podcast { episodeNumber_ :: Int
                        }
                deriving (Show)
 
-data Haskpod = Haskpod { episodeNumber :: Int
-                       , guests :: String
-                       , topics :: String
-                       , start :: String }
-    deriving (Typeable, Data, Eq, Show)
+data Commands = AddPodcast { number :: Int
+                           , guests :: String
+                           , topics :: String
+                           , start :: String }
+                deriving (Typeable, Data, Eq, Show)
 
-instance Attributes Haskpod where
+instance Attributes Commands where
     attributes _ = group "Adding a podcast" [
-        episodeNumber %> [ Help "Episode number", Default (1 :: Integer) ],
+        number %> [ Help "Episode number", Default (1 :: Integer) ],
         guests %> Help "Guests of the episode",
         topics %> Help "Topics of the episode",
         start %> [ Help "Start date and time"
                  , Default "01/01/14 00:00" ]
         ]
 
-instance RecordCommand Haskpod where
-  run' = undefined
-  mode_summary _ = "Podcast management tool."
+
+instance RecordCommand Commands where
+  run' _ _ = undefined
+  mode_summary _ = "add a podcast"
 
 csv :: String -> [String]
 csv s = case dropWhile isComma s of
@@ -46,22 +48,21 @@ csv s = case dropWhile isComma s of
             break isComma s'
   where isComma = (== ',')
 
-main = getArgs >>= executeR (Haskpod 0 "" "" "") >>= \opts -> do
-  let ts = start opts
-      Just t = (parseTime defaultTimeLocale "%D %R" ts) :: Maybe UTCTime
-      gs = csv $ guests opts
-      ps = csv $ topics opts
-      p  = Podcast (episodeNumber opts) gs ps t
+main = getArgs >>=
+       ((dispatchR []) :: [String] -> IO Commands) >>=
+       \cmds -> do
   d <- doesFileExist databaseFilePath
   when (not d) initDatabase
-  savePodcast p
-  print p
+  case cmds of
+    AddPodcast {} -> savePodcast cmds
 
+savePodcast :: Commands -> IO ()
 savePodcast p = do
   conn <- connectSqlite3 databaseFilePath
+  print p
   run conn "INSERT INTO podcasts VALUES (NULL, ?, ?, ?, ?)"
-    [toSql $ episodeNumber_ p, toSql $ unlines $ topics_ p,
-     toSql $ unlines $ guests_ p, toSql $ start_ p]
+    [toSql $ number p, toSql $ topics p,
+     toSql $ guests p, toSql $ start p]
   commit conn
   disconnect conn
   return ()

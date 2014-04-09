@@ -9,7 +9,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import System.Console.CmdLib (Attributes(..), RecordCommand(..), Typeable, Data,
                               Attribute(..), (%>), group, getArgs,
-                              dispatchR)
+                              recordCommands, dispatch)
 import System.Directory
 import System.Locale
 
@@ -37,7 +37,7 @@ instance Attributes Commands where
 
 
 instance RecordCommand Commands where
-  run' _ _ = undefined
+  run' cmd _ = savePodcast cmd
   mode_summary _ = "add a podcast"
 
 csv :: String -> [String]
@@ -48,13 +48,11 @@ csv s = case dropWhile isComma s of
             break isComma s'
   where isComma = (== ',')
 
-main = getArgs >>=
-       ((dispatchR []) :: [String] -> IO Commands) >>=
-       \cmds -> do
+main = do
   d <- doesFileExist databaseFilePath
   when (not d) initDatabase
-  case cmds of
-    AddPodcast {} -> savePodcast cmds
+  getArgs >>=
+    dispatch [] (recordCommands $ AddPodcast 0 "" "" "")
 
 savePodcast :: Commands -> IO ()
 savePodcast p = do

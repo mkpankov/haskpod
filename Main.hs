@@ -20,9 +20,9 @@ data Podcast = Podcast { episodeNumber_ :: Int
                deriving (Show)
 
 data Haskpod = Haskpod { episodeNumber :: Int
-                 , guests :: String
-                 , topics :: String
-                 , start :: String }
+                       , guests :: String
+                       , topics :: String
+                       , start :: String }
     deriving (Typeable, Data, Eq, Show)
 
 instance Attributes Haskpod where

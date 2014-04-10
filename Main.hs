@@ -9,7 +9,7 @@ import Database.HDBC
 import Database.HDBC.Sqlite3
 import System.Console.CmdLib (Attributes(..), RecordCommand(..), Typeable, Data,
                               Attribute(..), (%>), group, getArgs,
-                              recordCommands, dispatch)
+                              recordCommands, dispatchR)
 import System.Directory
 import System.Locale
 
@@ -24,21 +24,28 @@ data Commands = AddPodcast { number :: Int
                            , guests :: String
                            , topics :: String
                            , start :: String }
+              | ShowPodcasts { numberToShow :: Int }
                 deriving (Typeable, Data, Eq, Show)
 
 instance Attributes Commands where
-    attributes _ = group "Adding a podcast" [
-        number %> [ Help "Episode number", Default (1 :: Integer) ],
-        guests %> Help "Guests of the episode",
-        topics %> Help "Topics of the episode",
-        start %> [ Help "Start date and time"
-                 , Default "01/01/14 00:00" ]
+    attributes _ = group "Noname" [
+      group "Adding a podcast" [
+         number %> [ Help "Episode number", Default (1 :: Integer) ],
+         guests %> Help "Guests of the episode",
+         topics %> Help "Topics of the episode",
+         start %> [ Help "Start date and time"
+                  , Default "01/01/14 00:00" ]
+         ],
+      group "Showing the podcasts" [
+        numberToShow %> Help "How much podcasts to display"
         ]
-
+      ]
 
 instance RecordCommand Commands where
-  run' cmd _ = savePodcast cmd
-  mode_summary _ = "add a podcast"
+  run' cmd@(AddPodcast {}) _ = savePodcast cmd
+  run' cmd@(ShowPodcasts {}) _ = showPodcasts cmd
+  mode_summary (AddPodcast {}) = "add a podcast"
+  mode_summary (ShowPodcasts {}) = "show podcasts"
 
 csv :: String -> [String]
 csv s = case dropWhile isComma s of
@@ -48,11 +55,13 @@ csv s = case dropWhile isComma s of
             break isComma s'
   where isComma = (== ',')
 
+main :: IO ()
 main = do
   d <- doesFileExist databaseFilePath
   when (not d) initDatabase
-  getArgs >>=
-    dispatch [] (recordCommands $ AddPodcast 0 "" "" "")
+  args <- getArgs
+  cmd <- dispatchR [] args :: IO Commands
+  run' cmd args
 
 savePodcast :: Commands -> IO ()
 savePodcast p = do
@@ -78,3 +87,12 @@ initDatabase = do
   return ()
 
 databaseFilePath = "podcasts.db"
+
+showPodcasts :: Commands -> IO ()
+showPodcasts _ = do
+  conn <- connectSqlite3 databaseFilePath
+  rows <- quickQuery conn ("SELECT number, topics, guests, start_ " ++
+                           " FROM podcasts") []
+  print rows
+  disconnect conn
+  return ()

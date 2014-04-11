@@ -3,6 +3,7 @@
 module Main where
 
 import Control.Monad
+import Data.List (intersperse)
 import Data.Time
 import Data.DateTime
 import Database.HDBC
@@ -34,7 +35,7 @@ instance Attributes Commands where
          guests %> Help "Guests of the episode",
          topics %> Help "Topics of the episode",
          start %> [ Help "Start date and time"
-                  , Default "01/01/14 00:00" ]
+                  , Default "2014-01-01 00:00:00.0" ]
          ],
       group "Showing the podcasts" [
         numberToShow %> Help "How much podcasts to display"
@@ -93,6 +94,17 @@ showPodcasts _ = do
   conn <- connectSqlite3 databaseFilePath
   rows <- quickQuery conn ("SELECT number, topics, guests, start_ " ++
                            " FROM podcasts") []
-  print rows
+  mapM_ showPodcast rows
   disconnect conn
   return ()
+
+showPodcast :: [SqlValue] -> IO ()
+showPodcast values = do
+  let number : topics : guests : start_ : [] = values
+  putStrLn $ "Episode " ++ show (fromSql number :: Int)
+  putStrLn $ "Topics:\n  " ++ (
+    concat $ intersperse "\n  " (csv $ (fromSql topics :: String)))
+  putStrLn $ "Guests:\n  " ++ (
+    concat $ intersperse ", " (csv $ (fromSql guests :: String)))
+  putStrLn $ "Start: " ++ show (fromSql start_ :: UTCTime)
+  putStrLn ""

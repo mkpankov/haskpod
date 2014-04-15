@@ -5,7 +5,7 @@ name:                haskpod
 version:             0.1.0.0
 synopsis:            Podcast management tool
 -- description:         
-license:             AllRightsReserved
+license:             PublicDomain
 license-file:        LICENSE
 author:              Michael Pankov
 maintainer:          mkpankov@gmail.com
